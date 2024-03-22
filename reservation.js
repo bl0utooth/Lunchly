@@ -1,0 +1,59 @@
+/** Reservation for Lunchly */
+
+const moment = require("moment");
+
+const db = require("../db");
+
+
+/** A reservation for a party */
+
+class Reservation {
+  constructor({id, customerId, numGuests, startAt, notes}) {
+    this.id = id;
+    this.customerId = customerId;
+    this.numGuests = numGuests;
+    this.startAt = startAt;
+    this.notes = notes;
+  }
+
+  save() {
+    if (!this.id) {
+      this.id = Date.now().toString();
+      lunchlyDB[this.id] = this;
+      console.log('Reservation Set:', this)
+    } else {
+      if (lunchlyDB[this.id]) {
+        lunchlyDB[this.id] = this;
+        console.log('Reservation Altered:', this);
+      } else {
+        console.log('Reservation not found:', this)
+      }
+    }
+  }
+
+  /** formatter for startAt */
+
+  getformattedStartAt() {
+    return moment(this.startAt).format('MMMM Do YYYY, h:mm a');
+  }
+
+  /** given a customer id, find their reservations. */
+
+  static async getReservationsForCustomer(customerId) {
+    const results = await db.query(
+          `SELECT id, 
+           customer_id AS "customerId", 
+           num_guests AS "numGuests", 
+           start_at AS "startAt", 
+           notes AS "notes"
+         FROM reservations 
+         WHERE customer_id = $1`,
+        [customerId]
+    );
+
+    return results.rows.map(row => new Reservation(row));
+  }
+}
+
+
+module.exports = Reservation;
